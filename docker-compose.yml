@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app/:/app
+    image: app:django
+    container_name: django_container
+    command: >
+      sh -c "python manage.py wait_for_db &&
+             python manage.py makemigrations &&
+             python manage.py migrate &&
+             if [ ! -f .db_populated ]; then python populate_db.py && touch .db_populated; fi &&
+             python manage.py runserver 0.0.0.0:8000"
+    environment:
+      - SECRET_KEY=django-insecure-1dwr36+i08)vas*(bn7h*^_fy&zky*6k@!_ww^(=&cyp1kla$2
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_HOST=db
+      - DB_NAME=instahyre_db
+      - DB_USER=kuriakose
+      - DB_PASS=Password#123
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15.5-alpine3.19
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=instahyre_db
+      - POSTGRES_USER=kuriakose
+      - POSTGRES_PASSWORD=Password#123
+    container_name: postgres_db
+
+volumes:
+  db-data:
